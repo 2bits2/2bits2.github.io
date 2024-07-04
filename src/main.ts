@@ -15,7 +15,7 @@ function setupThreeScene(app: HTMLDivElement) {
         return;
     }
 
-    const renderer = new THREE.WebGLRenderer({ visible: true });
+    const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x0, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
