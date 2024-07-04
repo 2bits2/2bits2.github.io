@@ -19,7 +19,7 @@ function setupThreeScene(app: HTMLDivElement) {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x0, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.outputEncoding = THREE.sRGBEncoding;
+    // renderer.outputEncoding = THREE.sRGBEncoding;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.25;
     app.appendChild(renderer.domElement);
@@ -41,7 +41,7 @@ function setupThreeScene(app: HTMLDivElement) {
     window.addEventListener("resize", () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         aspectRatio = window.innerWidth / window.innerHeight;
-        camera.aspect = aspectRatio;
+        // camera.aspect = aspectRatio;
         camera.updateProjectionMatrix();
     });
 
