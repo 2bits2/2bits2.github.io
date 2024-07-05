@@ -1,6 +1,5 @@
 uniform float u_time;
 uniform vec2  u_mouse;
-uniform float u_whatImage;
 varying float v_size;
 varying vec2  v_uv;
 varying vec4  v_color;

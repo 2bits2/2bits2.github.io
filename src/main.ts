@@ -1,39 +1,26 @@
 import './style.css'
 import * as THREE from 'three';
 import WebGL from 'three/addons/capabilities/WebGL.js';
-
 import * as fragmentShader from './fragment.glsl?raw';
 import * as particleVertexShader from './particleVertex.glsl?raw';
 import * as simVertexShader from './simVertex.glsl?raw'
 import * as simFragmentShader from './simFragment.glsl?raw'
-
 import TextureSimulation from './textureSimulation';
 
 function workspace1(app:HTMLElement,
-                    pictures:[string, string, string, string, string, string]) {
+                    pictures:string[]) {
 
-    const scrollPositionUniform = {
-        value: 0
-    };
-    let whatImageUniform = {
-        value: 0.01
-    };
     let isSwitching = {
         value: 1.0
     };
-
     const timeStampUniform = { value: 0.0 };
+    const textureLoader = new THREE.TextureLoader();
+    const imgTextures = pictures.map(val => textureLoader.load(val));
 
-    document.addEventListener('scroll', () => {
-        let top = document.documentElement.scrollTop;
-        var b = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        scrollPositionUniform.value = top / b;
-
-        const numImages = 6;
-        const numTransitions = numImages - 1;
-        whatImageUniform.value = scrollPositionUniform.value * numTransitions;
-        isSwitching.value = Math.cos(whatImageUniform.value * 2.0 * Math.PI);
-    })
+    const texturesToUse = [imgTextures[0], imgTextures[1]];
+    const textureFactorUniform = {
+        value: 0
+    };
 
     const numDimensionsRGBA = 4;
     // the renderer should fill the window
@@ -95,18 +82,14 @@ function workspace1(app:HTMLElement,
     infoTexture.magFilter = THREE.NearestFilter;
     infoTexture.needsUpdate = true;
 
-
     const numParticles = size * size;
     const numPosDimensions = 3;
     const numUvDimensions = 2;
-    const numParticleSizeDimensions = 2;
 
     // creating positions and uvs
     // for the particle geometry buffer
     let positions = new Float32Array(numParticles * numPosDimensions);
     let uvs = new Float32Array(numParticles * numUvDimensions);
-    let particleSizes = new Float32Array(numParticles * numParticleSizeDimensions);
-
     for (let row = 0; row < size; row++) {
         for (let col = 0; col < size; col++) {
             let i = col + row * size;
@@ -117,14 +100,17 @@ function workspace1(app:HTMLElement,
             positions[posIndex + 2] = 0;
             uvs[uvIndex + 0] = row / size;
             uvs[uvIndex + 1] = col / size;
-            particleSizes[i * numParticleSizeDimensions] = 0.6 + Math.random() * 10;
-            particleSizes[i * numParticleSizeDimensions + 1] = 0.6 + Math.random() * 3;
         }
     }
 
+    // create the buffer
+    // with the new attributes
+    let bufferGeometry = new THREE.BufferGeometry();
+    bufferGeometry.setAttribute("position", new THREE.BufferAttribute(positions, numPosDimensions));
+    bufferGeometry.setAttribute("uv", new THREE.BufferAttribute(uvs, numUvDimensions));
+
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
-
     const planeIntersection = new THREE.Vector2();
 
     // track mouse position
@@ -139,15 +125,21 @@ function workspace1(app:HTMLElement,
         }
     });
 
-    // create the buffer
-    // with the new attributes
-    let bufferGeometry = new THREE.BufferGeometry();
-    bufferGeometry.setAttribute("position", new THREE.BufferAttribute(positions, numPosDimensions));
-    bufferGeometry.setAttribute("uv", new THREE.BufferAttribute(uvs, numUvDimensions));
-    bufferGeometry.setAttribute("mysize", new THREE.BufferAttribute(particleSizes, numParticleSizeDimensions));
+    document.addEventListener('scroll', () => {
+        let top = document.documentElement.scrollTop;
+        var b = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrollPosition = top / b;
+        const numTransitions = imgTextures.length - 1;
+        const whatImage = scrollPosition * numTransitions;
+        let index1 = Math.floor(whatImage) % (imgTextures.length);
+        let index2 = Math.floor(whatImage + 1) % (imgTextures.length);
+        let factor = (whatImage - index1) % imgTextures.length;
 
-    const textureLoader = new THREE.TextureLoader();
-    const imgTextures = pictures.map(val => textureLoader.load(val));
+        texturesToUse[0] = imgTextures[index1];
+        texturesToUse[1] = imgTextures[index2];
+        textureFactorUniform.value = factor;
+        isSwitching.value = Math.cos(whatImage * 2.0 * Math.PI);
+    })
 
     const material = new THREE.ShaderMaterial({
         transparent: true,
@@ -157,8 +149,8 @@ function workspace1(app:HTMLElement,
             u_mouse: { value: planeIntersection },
             u_time: timeStampUniform,
             u_positions: { value: null },
-            u_images: { value: imgTextures },
-            u_whatImage: whatImageUniform
+            u_useTextures: {value: texturesToUse},
+            u_textureFactor: textureFactorUniform
         }
     });
 
@@ -190,16 +182,8 @@ function workspace1(app:HTMLElement,
     renderer.setAnimationLoop(animationLoop);
 }
 
-
 const app = document.querySelector<HTMLDivElement>('#app')!;
-
-workspace1(app,
-    [
+workspace1(app, [
         "/vite.svg",
-        "/src/typescript.svg",
-        "/vite.svg",
-        "/src/typescript.svg",
-        "/vite.svg",
-        "/src/typescript.svg",
-]
+        "/typescript.svg",]
 );
